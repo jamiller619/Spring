@@ -1,0 +1,17 @@
+{
+  "name": "@spring/proxy",
+  "version": "1.0.0",
+  "description": "A dead simple Unsplash proxy",
+  "repository": "https://github.com/jamiller619/spring/tree/main/packages/proxy",
+  "author": "Jeff Miller",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "dx": "deno run --allow-net --allow-read --allow-env --watch index.ts",
+    "start": "deno run --allow-net --allow-read --allow-env index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
