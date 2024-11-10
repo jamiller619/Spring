@@ -1,5 +1,5 @@
 {
   "deno.enable": true,
-  "deno.enablePaths": ["./packages/proxy"],
+  "deno.enablePaths": ["./packages/api"],
   "typescript.tsdk": "./node_modules/typescript/lib"
 }

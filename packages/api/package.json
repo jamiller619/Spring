@@ -1,8 +1,8 @@
 {
-  "name": "@spring/proxy",
+  "name": "@spring/api",
   "version": "1.0.0",
-  "description": "A dead simple Unsplash proxy",
-  "repository": "https://github.com/jamiller619/spring/tree/main/packages/proxy",
+  "description": "A serverless function http endpoint for getting an Unsplash photo",
+  "repository": "https://github.com/jamiller619/spring/tree/main/packages/api",
   "author": "Jeff Miller",
   "license": "MIT",
   "type": "module",
@@ -12,6 +12,7 @@
     "start": "deno run --allow-net --allow-read --allow-env index.ts"
   },
   "dependencies": {
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "unsplash-js": "^7.0.19"
   }
 }

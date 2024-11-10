@@ -1,3 +1,5 @@
+import bg from '../assets/bg.png'
+
 class ZiiiroClock extends HTMLElement {
   content = {
     face: createFace(this.offsetWidth),
@@ -100,15 +102,19 @@ class ZiiiroClock extends HTMLElement {
 
 const style = document.createElement('style')
 
-style.innerText = /*css*/ `
+style.textContent = /*css*/ `
   * {
     box-sizing: border-box;
   }
 
-  .hours-container, .minutehand-container, .minutes-container {
+  .hours-container,
+  .minutehand-container,
+  .minutes-container {
     width: 100%;
     height: 100%;
-    animation: rotate 1s var(--ease);
+    animation-name: rotate;
+    animation-duration: 1s;
+    animation-timing-function: var(--ease);
   }
 
   .hours-container, .minutehand-container {
@@ -158,7 +164,7 @@ style.innerText = /*css*/ `
     height: 100%;
     mask-size: 100%;
     mask-position: 50%;
-    mask-image: url('/assets/bg.png');
+    mask-image: url("${bg}");
     border-radius: 50%;
     overflow: hidden;
   }
@@ -171,8 +177,14 @@ style.innerText = /*css*/ `
     box-shadow: -1px 0 15px 0 rgba(0, 0, 0, 0.2);
   }
 
+  @keyframes rotate {
+    from {
+      transform: rotate(-180deg);
+    }
+  }
+
   @keyframes appear {
-    0% {
+    from {
       opacity: 0;
     }
   }
@@ -186,11 +198,6 @@ style.innerText = /*css*/ `
     }
   }
 
-  @keyframes rotate {
-    0% {
-      transform: rotate(-180deg);
-    }
-  }
 `
 
 function createContainer(containerClassName?: string, childClassName?: string) {

@@ -1,78 +1,73 @@
-import { createApi } from 'unsplash-js'
-import type { Random } from 'unsplash-js/dist/methods/photos/types'
+import { Options, PhotosType, UnsplashPhoto } from '../../@types'
 
-const unsplash = createApi({
-  apiUrl: import.meta.env.PUBLIC_PROXY_URL,
-})
+const style = document.createElement('style')
 
-type PhotosType = 'collection' | 'search' | 'topic' | 'user'
-
-type UnsplashPhoto = {
-  author: {
-    name: string
-    link: string
+style.textContent = /*css*/ `
+  img {
+    position: absolute;
+    inset: 0;
+    animation: fadeIn 1.2s 0.5s both;
   }
-  url: string
-  color: string | null
-}
 
-type Options = {
-  key: PhotosType
-  id: string
-}
+  a {
+    color: currentColor;
+  }
+
+  span {
+    color: white;
+    opacity: 0.8;
+    line-height: normal;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin: 1rem;
+    font-size: 0.88em;
+    transition: opacity 200ms;
+    animation: fadeIn 600ms 250ms backwards;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`
 
 class EpicUnsplash extends HTMLElement {
   img = document.createElement('img')
   attrib = document.createElement('span')
-  key!: string
-  keyid!: string
 
   get options(): Options {
     return {
-      id: this.getAttribute('keyid') as string,
       key: this.getAttribute('key') as PhotosType,
+      value: this.getAttribute('value') as string,
     }
   }
 
   async connectedCallback() {
     this.attachShadow({ mode: 'open' })
+    this.shadowRoot?.append(style, this.img, this.attrib)
 
-    const style = document.createElement('style')
     const data = await fetchPhoto(this.options)
-    const backgroundColor = data?.color ?? 'white'
-
-    style.textContent = /*css*/ `
-      img {
-        position: absolute;
-        inset: 0;
-        background-color: ${backgroundColor};
-      }
-
-      a {
-        color: white;
-        text-decoration: none;
-      }
-
-      span {
-        color: rgb(255 255 255 / 0.5);
-        line-height: normal;
-        position: absolute;
-        top: 0;
-        right: 0;
-        background-color: ${backgroundColor};
-        padding: 0.5em 0.6em;
-        border-bottom-left-radius: 0.3em;
-        font-size: 0.85em;
-        font-weight: 300;
-      }
-    `
+    
+    localStorage.setItem('data', JSON.stringify(data))
 
     this.createAttrib(data)
-    this.shadowRoot?.append(style, this.img, this.attrib)
+
+    const backgroundColor = data?.color ?? 'white'
+
+    document.body.style.backgroundColor = backgroundColor
 
     const sizeImage = () => {
       if (data?.url) {
-        const src = parseURL(data.url)
+        const src = addResizeParams(data.url)
 
         this.img.src = src
       }
@@ -86,7 +81,7 @@ class EpicUnsplash extends HTMLElement {
   createAttrib(data?: UnsplashPhoto) {
     const unsplashLink = document.createElement('a')
 
-    unsplashLink.href = createUnsplashLink('https://unsplash.com')
+    unsplashLink.href = createUnsplashLink()
     unsplashLink.innerText = 'Unsplash'
 
     const photographerLink = document.createElement('a')
@@ -107,7 +102,13 @@ class EpicUnsplash extends HTMLElement {
 
 customElements.define('epic-unsplash', EpicUnsplash)
 
-function createUnsplashLink(host: string) {
+/**
+ * Creates a link back to Unsplash, specific to this
+ * extension
+ * @param host The Unsplash host
+ * @returns The link string
+ */
+function createUnsplashLink(host: string = 'https://unsplash.com') {
   const url = new URL(host)
   const params = new URLSearchParams({
     utm_source: 'spring',
@@ -117,7 +118,14 @@ function createUnsplashLink(host: string) {
   return `${url}?${params}`
 }
 
-function parseURL(url: string) {
+/**
+ * Creates an image URL with parameters that resize the
+ * image based on the browser's current viewport. Keeps any
+ * image parameters already in the URL.
+ * @param url The Unsplash image URL
+ * @returns A new Unsplash URL
+ */
+function addResizeParams(url: string) {
   const params = new URLSearchParams({
     fit: 'crop',
     w: String(globalThis.innerWidth),
@@ -131,31 +139,17 @@ function parseURL(url: string) {
   return `${url}?${params}`
 }
 
-function parsePhoto(data: Random) {
-  const photo: UnsplashPhoto = {
-    author: {
-      name: data.user.name,
-      link: data.user.links.html,
-    },
-    color: data.color,
-    url: data.urls.raw,
-  }
+async function fetchPhoto(options: Options) {
+  const url = new URL(import.meta.env.PUBLIC_PROXY_URL)
+  const params = new URLSearchParams(options)
 
-  return photo
-}
-
-async function fetchPhoto(options: Options, prevImageId?: string) {
-  const res = await unsplash.photos.getRandom({
-    collectionIds: [options.id]
-  }, {
+  const res = await fetch(`${url}?${params}`, {
     headers: {
       'cache-control': `max-age=${import.meta.env.PUBLIC_CACHE_TTL}`
     }
   })
 
-  if (res.type === 'error') {
-    throw new Error(res.errors.join(' / '))
-  }
+  const data = await res.json()
 
-  return parsePhoto(res.response as Random)
+  return data as UnsplashPhoto
 }

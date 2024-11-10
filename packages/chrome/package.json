@@ -13,9 +13,7 @@
   "devDependencies": {
     "@types/chrome": "^0.0.280",
     "vite": "^5.4.10",
-    "vite-plugin-cp": "^4.0.8"
-  },
-  "dependencies": {
-    "unsplash-js": "^7.0.19"
+    "vite-plugin-cp": "^4.0.8",
+    "vite-plugin-singlefile": "^2.0.3"
   }
 }

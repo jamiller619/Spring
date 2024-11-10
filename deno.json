@@ -1,0 +1,7 @@
+{
+  "deploy": {
+    "project": "678c32b3-0d0b-47d8-8743-4153a03cf7c6",
+    "include": ["packages/api"],
+    "entrypoint": "packages/api/index.ts"
+  }
+}
