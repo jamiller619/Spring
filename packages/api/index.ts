@@ -79,8 +79,7 @@ Deno.serve(
 
 /**
  * Retreives a single image from the Unsplash API based on
- * the user's options. Additionally includes headers that
- * cache the image for an entire day.
+ * the user's options.
  * @param options Extension's options object
  * @returns A single image
  */
@@ -101,8 +100,8 @@ function fetchPhotoBasedOnOptions(options: Options) {
 }
 
 /**
- * Transforms an image returned from the Unsplash API, into
- * a common format that is used internally
+ * Transforms an Unsplash API Image object into our Domain
+ * Image object
  * @param data An image object from the Unsplash API
  * @returns An object with two properties, the UnsplashPhoto
  * object and a link used to track photo downloads

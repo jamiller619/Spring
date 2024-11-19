@@ -210,4 +210,4 @@ function createSVGCircle() {
   return document.createElementNS(SVG_NS, 'circle')
 }
 
-export default customElements.define('ziiiro-clock', ZiiiroClock)
+customElements.define('ziiiro-clock', ZiiiroClock)

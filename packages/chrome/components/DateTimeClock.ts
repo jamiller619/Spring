@@ -64,4 +64,4 @@ style.textContent = /*css*/ `
   }
 `
 
-export default customElements.define('datetime-clock', DateTimeClock)
+customElements.define('datetime-clock', DateTimeClock)
