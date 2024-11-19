@@ -1,3 +1,5 @@
+/// <reference lib="DOM" />
+
 import { Options, PhotosType, UnsplashPhoto } from '../../@types'
 
 const style = document.createElement('style')
@@ -56,7 +58,7 @@ class EpicUnsplash extends HTMLElement {
     this.shadowRoot?.append(style, this.img, this.attrib)
 
     const data = await fetchPhoto(this.options)
-    
+
     localStorage.setItem('data', JSON.stringify(data))
 
     this.createAttrib(data)
@@ -145,8 +147,8 @@ async function fetchPhoto(options: Options) {
 
   const res = await fetch(`${url}?${params}`, {
     headers: {
-      'cache-control': `max-age=${import.meta.env.PUBLIC_CACHE_TTL}`
-    }
+      'cache-control': `max-age=${import.meta.env.PUBLIC_CACHE_TTL}`,
+    },
   })
 
   const data = await res.json()

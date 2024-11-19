@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import dotenv from 'npm:dotenv'
 import process from 'node:process'
 import { Options, UnsplashPhoto, photosType } from '../@types.ts'
@@ -6,7 +8,7 @@ import type { ApiResponse } from 'npm:unsplash-js/dist/helpers/response'
 import type { Random } from 'npm:unsplash-js/dist/methods/photos/types'
 
 dotenv.config({
-  path: '../../.env'
+  path: '../../.env',
 })
 
 const unsplash = createApi({
@@ -63,14 +65,17 @@ async function handleRequests(req: Request) {
   })
 }
 
-Deno.serve({
-  onError: function handleError(err) {
-    return Response.json({
-      message: (err as Error).message,
-      status: 500,
-    })
+Deno.serve(
+  {
+    onError: function handleError(err) {
+      return Response.json({
+        message: (err as Error).message,
+        status: 500,
+      })
+    },
   },
-}, handleRequests)
+  handleRequests,
+)
 
 /**
  * Retreives a single image from the Unsplash API based on
@@ -83,7 +88,7 @@ function fetchPhotoBasedOnOptions(options: Options) {
   switch (options.key) {
     case 'collection': {
       return unsplash.photos.getRandom({
-        collectionIds: [options.value]
+        collectionIds: [options.value],
       }) as Promise<ApiResponse<Random>>
     }
 

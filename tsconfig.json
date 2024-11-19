@@ -11,6 +11,6 @@
     "noImplicitThis": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2021.String"]
+    "lib": ["ES2021.String"]
   }
 }
