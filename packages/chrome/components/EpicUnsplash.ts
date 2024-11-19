@@ -1,5 +1,3 @@
-/// <reference lib="DOM" />
-
 import { Options, PhotosType, UnsplashPhoto } from '../../@types'
 
 const style = document.createElement('style')

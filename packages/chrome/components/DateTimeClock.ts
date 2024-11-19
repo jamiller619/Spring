@@ -1,5 +1,3 @@
-/// <reference lib="DOM" />
-
 class DateTimeClock extends HTMLElement {
   start = new Date()
   locale = this.hasAttribute('locale')
