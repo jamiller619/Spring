@@ -1,7 +1,7 @@
 class DateTimeClock extends HTMLElement {
   start = new Date()
   locale = this.hasAttribute('locale')
-    ? this.getAttribute('locale') as string
+    ? (this.getAttribute('locale') as string)
     : globalThis.navigator.language || 'en-US'
   minutesLast = 0
   time = document.createElement('span')
@@ -53,8 +53,6 @@ style.textContent = /*css*/ `
   .date, .time {
     display: block;
     line-height: 1;
-    opacity: 0;
-    animation: appear forwards 200ms 300ms ease-out;
   }
 
   .date {
@@ -63,12 +61,6 @@ style.textContent = /*css*/ `
 
   .time {
     font-size: 1em;
-  }
-
-  @keyframes appear {
-    to {
-      opacity: 1;
-    }
   }
 `
 

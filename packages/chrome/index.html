@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -19,49 +19,47 @@
         justify-content: end;
       }
 
-      datetime-clock {
-        color: #fff;
-        text-shadow: 1px 1px 2px #161515;
-      }
-
       datetime-clock,
       ziiiro-clock {
         margin: 1rem;
       }
 
       datetime-clock {
-        position: relative;
+        color: #fff;
         text-align: right;
         font-size: 8vmin;
         text-shadow: 1px 1px 2px #161515;
+        animation: appear 1s 200ms both;
       }
 
       ziiiro-clock {
-        display: block;
-        position: relative;
         width: 32vmin;
         height: 32vmin;
-        transform: scale(1);
-        animation: scale 0.5s 0.1s backwards var(--easeBounce);
+        /* animation: scale 0.5s 0.1s backwards var(--easeBounce); */
       }
 
       @keyframes scale {
-        0% {
+        from {
           transform: scale(0);
+        }
+        to {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes appear {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
         }
       }
     </style>
   </head>
   <body>
-    <epic-unsplash key="collection" value="612211"></epic-unsplash>
+    <epic-unsplash key="collection" value="yvLAh9Xk5B4"></epic-unsplash>
     <datetime-clock></datetime-clock>
-    <ziiiro-clock
-      minute="#f53a88"
-      minutehand="#ffa0e1"
-      marker="#f3a6a6"
-      hour="#6813aa"
-      dial="#201e21"
-      dialborder="#511c5f"
-    ></ziiiro-clock>
+    <ziiiro-clock minute="#ff00e0" hour="#408cff"></ziiiro-clock>
   </body>
 </html>

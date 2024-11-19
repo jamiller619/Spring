@@ -14,7 +14,7 @@
     "dx": "yarn concurrently --n chrome,api \"yarn chrome:dx\" \"yarn api:dx\"",
     "api:dx": "yarn workspace @spring/api dx",
     "chrome:dx": "yarn workspace @spring/chrome dx",
-    "chrome:build": "yarn workspace @spring/chrome build",
+    "build": "yarn workspace @spring/chrome build",
     "api:deploy": "deployctl deploy --env-file=.env",
     "release": "yarn chrome:build && deno run -A scripts/release.ts"
   },
