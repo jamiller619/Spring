@@ -5,10 +5,6 @@
     <title>New Tab</title>
     <script type="module" src="./index.ts"></script>
     <style>
-      :root {
-        --easeBounce: cubic-bezier(0.25, 0.46, 0.18, 1.3);
-      }
-
       body {
         padding: 0;
         margin: 0;
@@ -17,49 +13,38 @@
         display: flex;
         align-items: end;
         justify-content: end;
+        font: unset;
       }
 
-      datetime-clock,
+      time-clock,
       ziiiro-clock {
         margin: 1rem;
       }
 
-      datetime-clock {
+      time-clock {
         color: #fff;
         text-align: right;
         font-size: 8vmin;
         text-shadow: 1px 1px 2px #161515;
-        animation: appear 1s 200ms both;
+        animation: appear 500ms 1s both ease-out;
       }
 
       ziiiro-clock {
-        width: 32vmin;
-        height: 32vmin;
-        /* animation: scale 0.5s 0.1s backwards var(--easeBounce); */
-      }
-
-      @keyframes scale {
-        from {
-          transform: scale(0);
-        }
-        to {
-          transform: scale(1);
-        }
+        --clock-size: 28vmin;
+        width: var(--clock-size);
+        height: var(--clock-size);
       }
 
       @keyframes appear {
         from {
           opacity: 0;
         }
-        to {
-          opacity: 1;
-        }
       }
     </style>
   </head>
   <body>
     <epic-unsplash key="collection" value="yvLAh9Xk5B4"></epic-unsplash>
-    <datetime-clock></datetime-clock>
-    <ziiiro-clock minute="#ff00e0" hour="#408cff"></ziiiro-clock>
+    <time-clock></time-clock>
+    <ziiiro-clock hour="dodgerblue" minute="deeppink"></ziiiro-clock>
   </body>
 </html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Spring Options</title>
+  </head>
+  <body>
+    <form>
+      <section>
+        <label>
+          <span>Unsplash photo type</span>
+          <select name="unsplash.photo.type">
+            <option value="collection">Collection</option>
+            <option value="search">Search</option>
+            <option value="topic">Topic</option>
+            <option value="user">User</option>
+          </select>
+        </label>
+        <label>
+          <span id="unsplash.photo.value.label"></span>
+          <input name="unsplash.photo.value" type="text" />
+        </label>
+      </section>
+      <section>
+        <label class="align">
+          <input type="checkbox" name="datetime.display" />
+          <span>Display time</span>
+        </label>
+      </section>
+      <section>
+        <label class="align">
+          <input type="color" name="clock.hours.color" />
+          <span>Hour hand color</span>
+        </label>
+        <label class="align">
+          <input type="color" name="clock.minutes.color" />
+          <span>Minute hand color</span>
+        </label>
+      </section>
+      <section>
+        <button id="reset" type="button">Reset to default</button>
+      </section>
+    </form>
+  </body>
+  <script type="module" src="./index.ts"></script>
+</html>

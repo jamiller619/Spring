@@ -1,213 +1,248 @@
-import getClockAngles from '../utils/getClockAngles'
+import { Options } from '@types'
+import { css, html } from '@/utils/cis'
+import getClockAngles from '@/utils/getClockAngles'
+import debounce from 'debounce'
 
-const SVG_NS = 'http://www.w3.org/2000/svg'
-
-const template = /*html*/ `
-  <defs>
-    <radialGradient id="dialfill" cx="0.75" cy="0.25" r="1">
-      <stop offset="0%" stop-color="rgb(40 40 40)"></stop>
-      <stop offset="100%" stop-color="rgb(25 25 25)"></stop>
-    </radialGradient>
-  </defs>
-  <clipPath id="clip">
-    <circle></circle>
-  </clipPath>
-  <foreignObject id="hours" width="100%" height="100%" clip-path="url(#clip)">
-    <div style="width: 100%; height:100%"></div>
-  </foreignObject>
-  <foreignObject id="minutes" width="100%" height="100%" clip-path="url(#clip)">
-    <div style="width:100%; height:100%"></div>
-  </foreignObject>
-  <circle id="dial" fill="url(#dialfill)"></circle>
+const template = html`
+  <div id="effects"></div>
+  <div id="container">
+    <div id="hour"></div>
+    <div id="minute"></div>
+    <div id="face"></div>
+    <div id="minute-marker"></div>
+    <div id="center"></div>
+  </div>
 `
 
+type ClockOptions = Pick<Options, 'clock.hours.color' | 'clock.minutes.color'>
+
 class ZiiiroClock extends HTMLElement {
-  content = document.createElementNS(SVG_NS, 'svg')
+  template = document.createElement('template')
   hourHand: HTMLElement
   minuteHand: HTMLElement
+  minuteMarker: HTMLElement
+  face: HTMLElement
+
+  startTime = Date.now()
+
+  static observedAttributes = ['hour', 'minute']
 
   constructor() {
     super()
 
-    this.content.innerHTML = template
-    this.hourHand = this.content.querySelector('#hours')!
-      .firstElementChild as HTMLElement
-    this.minuteHand = this.content.querySelector('#minutes')!
-      .firstElementChild as HTMLElement
+    this.template.innerHTML = template
+
+    const { content } = this.template
+
+    this.hourHand = content.getElementById('hour')!
+    this.minuteHand = content.getElementById('minute')!
+    this.minuteMarker = content.getElementById('minute-marker')!
+    this.face = content.getElementById('face')!
+
+    globalThis.addEventListener(
+      'resize',
+      debounce(this.drawFace.bind(this), 200),
+    )
   }
 
   connectedCallback() {
     this.attachShadow({ mode: 'open' })
+    this.setColors()
+    this.shadowRoot?.append(style, this.template.content)
 
-    const size = this.clientHeight
-    const halfSize = size / 2
+    this.drawFace().render()
+  }
 
-    this.applyConicGradient(this.hourHand, 'hour')
-    this.applyConicGradient(this.minuteHand, 'minute')
+  attributeChangedCallback() {
+    this.setColors()
+  }
 
-    this.applyAttributes('#clip circle', {
-      r: halfSize,
-      cx: halfSize,
-      cy: halfSize,
-    })
+  setColors() {
+    const colors = this.getHandColors()
 
-    this.applyAttributes('#dial', {
-      r: size / 4,
-      cx: halfSize,
-      cy: halfSize,
-    })
+    this.hourHand.style.background = `conic-gradient(rgb(255 255 255 / 0), ${colors['clock.hours.color']})`
+    this.minuteHand.style.background = `conic-gradient(rgb(255 255 255 / 0), ${colors['clock.minutes.color']})`
+    this.minuteMarker.style.background = `color-mix(in srgb, ${colors['clock.minutes.color']} 75%, white)`
+  }
 
-    this.content.setAttributeNS(null, 'viewBox', `0 0 ${size} ${size}`)
-
-    this.shadowRoot?.append(style, this.content)
-
-    this.render()
+  getHandColors(): ClockOptions {
+    return {
+      'clock.hours.color': this.getAttribute('hour')!,
+      'clock.minutes.color': this.getAttribute('minute')!,
+    }
   }
 
   render() {
     this.renderTime(new Date())
-    requestAnimationFrame(this.render.bind(this))
+    requestAnimationFrame(() => this.render())
   }
 
   renderTime(time: Date) {
     const degrees = getClockAngles(time)
 
-    this.minuteHand.style.transform = `rotate(${degrees.minute}deg)`
-    this.hourHand.style.transform = `rotate(${degrees.hour}deg)`
+    this.minuteHand.style.rotate = `${degrees.minute}deg`
+    this.minuteMarker.style.rotate = `${degrees.minute}deg`
+    this.hourHand.style.rotate = `${degrees.hour}deg`
+
+    return this
   }
 
-  applyConicGradient(el: HTMLElement, attrName: string) {
-    Object.assign(el.style, {
-      background: `conic-gradient(transparent, ${this.getAttribute(attrName)})`,
-    })
-  }
+  drawFace() {
+    const markers: HTMLElement[] = []
+    const size = this.clientHeight
+    const distance = size / 2.8
 
-  applyAttributes(query: string, attrs: Record<string, string | number>) {
-    const el = this.content.querySelector(query)
+    for (let i = 0; i < 12; i += 1) {
+      const angle = (i * 360) / 12
+      const marker = document.createElement('div')
 
-    if (!el) {
-      console.warn(`Unable to find element using query selector "${query}"`)
+      // We have to use `transform` here because we need to
+      // move the marker AFTER rotating it.
+      marker.style.transform = `rotate(${angle}deg) translate(${distance}px)`
 
-      return
+      markers.push(marker)
     }
 
-    for (const attr in attrs) {
-      el.setAttributeNS(null, attr, String(attrs[attr]))
-    }
+    this.face.replaceChildren(...markers)
+
+    return this
   }
 }
 
 const style = document.createElement('style')
 
-style.textContent = /*css*/ `
-  * {
-    box-sizing: border-box;
-  }
-
+style.textContent = css`
   :host {
+    --color-center: #1a1a1a;
+    --color-face: #ffffff9d;
+
+    --ease-bounce: cubic-bezier(0, 0, 0, 1.5);
+    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+
     position: relative;
+    border-radius: 50%;
+    backdrop-filter: blur(5px);
   }
 
-  /* :host {
-    backdrop-filter: blur(2px);
-    clip-path: circle(50%);
-    background: rgb(255 45 81 / 0.2);
-  } */
-
-  /* .hours-container,
-  .minutehand-container,
-  .minutes-container {
-    width: 100%;
-    height: 100%;
-    animation-name: rotate;
-    animation-duration: 1s;
-    animation-timing-function: var(--ease);
+  #container,
+  #effects,
+  #minute,
+  #hour,
+  #center {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
   }
 
-  .hours-container,
-  .minutes-container {
+  #effects {
+    background: rgb(240 240 240 / 0.5);
+    outline: 5px solid #232323d9;
+    box-shadow: 0 0 25px 7px #00000054;
+    animation: appear 500ms 500ms both var(--ease-out);
+  }
+
+  #container {
+    animation: bounce 300ms var(--ease-out);
+
+    &:after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      /* background: radial-gradient(
+        circle at 10% 20%,
+        color-mix(in srgb, var(--color-center) 97%, white),
+        var(--color-center) 70%
+      ); */
+    }
+  }
+
+  #hour,
+  #minute {
     mix-blend-mode: multiply;
   }
 
-  .hours-container {
-    box-shadow: -1px -1px 5px 5px black;
+  #minute,
+  #minute-marker,
+  #hour {
+    animation-name: rotate, appear, bounce;
+    animation-duration: 1s, 800ms, 300ms;
+    animation-timing-function: var(--ease-out), var(--ease-bounce);
   }
 
-  .hours-container,
-  .minutehand-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-  }
-
-  .dial {
-    animation: dial 0.5s 0.1s both var(--easeBounce);
-    background: radial-gradient(#0e0e0e, #212037);
-    border-radius: 50%;
-    box-shadow: 1px 1px 12px 4px rgb(0 0 0 / 0.2);
-    height: 100%;
-    left: 0;
+  #minute-marker {
+    width: 4px;
+    height: calc(50% + 2px);
     position: absolute;
-    top: 0;
-    transform-origin: center;
-    width: 100%;
-    z-index: 1;
-  }
-
-  .hours,
-  .minutes {
-    width: 100%;
-    height: 100%;
-    mask-size: 100%;
-    mask-position: 50%;
-    mask-image: conic-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 1));
-    border-radius: 50%;
-    box-shadow: inset 0px 0px 50px rgb(101 101 101 / 30%);
-  }
-
-  .minutehand {
-    width: 5px;
-    height: 50%;
-    margin-left: calc(50% - 4px);
+    left: 50%;
+    bottom: calc(50% - 2px);
     transform-origin: bottom;
-    background-color: rgb(255 0 250 / 0.6);
-    box-shadow: -3px 0 10px 8px rgb(0 0 0 / 0.01);
+  }
+
+  #center,
+  #face div {
+    animation-name: bounce, appear;
+    animation-duration: 500ms;
+    animation-delay: 300ms;
+    animation-fill-mode: backwards;
+    animation-timing-function: var(--ease-bounce);
+  }
+
+  #center {
+    /* background: linear-gradient(125deg, #616161,
+    #000000); */
+    background: radial-gradient(
+      circle at 10% 20%,
+      color-mix(in srgb, var(--color-center) 97%, white),
+      var(--color-center) 70%
+    );
+    inset: 29%;
+    /* border: 6px solid color-mix(in srgb, var(--color-center) 85%, black); */
+    box-shadow: 0px 5px 8px #00000080;
+
+    /* &:before {
+      content: '';
+      position: absolute;
+      inset: 3%;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 10% 20%,
+        color-mix(in srgb, var(--color-center) 85%, white),
+        var(--color-center) 60%
+      );
+    } */
+  }
+
+  #face {
+    div {
+      background: var(--color-center);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 1.5%;
+      height: 1.5%;
+      border-radius: 50%;
+      transform-origin: top left;
+    }
   }
 
   @keyframes rotate {
     from {
-      transform: rotate(-180deg);
+      rotate: -180deg;
     }
   }
 
-  @keyframes dial {
+  @keyframes appear {
     from {
-      transform: scale(1);
+      opacity: 0;
     }
-    to {
-      transform: scale(0.5);
-    }
-  } */
+  }
 
+  @keyframes bounce {
+    from {
+      scale: 0;
+    }
+  }
 `
-
-function applyAttributes(
-  el: SVGElement | null,
-  attrs: Record<string, string | number>,
-) {
-  if (!el) {
-    throw new Error(`Cannot apply attributes to a "null" element!`)
-  }
-
-  for (const attr in attrs) {
-    el.setAttributeNS(null, attr, String(attrs[attr]))
-  }
-
-  return el
-}
-
-function createSVGCircle() {
-  return document.createElementNS(SVG_NS, 'circle')
-}
 
 customElements.define('ziiiro-clock', ZiiiroClock)

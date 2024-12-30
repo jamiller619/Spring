@@ -1,12 +1,102 @@
-import { Options, PhotosType, UnsplashPhoto } from '../../@types'
+import { css } from '@/utils/cis'
+import { Options, PhotosType, UnsplashPhoto } from '@types'
+import debounce from 'debounce'
 
 const style = document.createElement('style')
 
-style.textContent = /*css*/ `
+type UnsplashOptions = Pick<
+  Options,
+  'unsplash.photo.type' | 'unsplash.photo.value'
+>
+
+class EpicUnsplash extends HTMLElement {
+  img = document.createElement('img')
+  attrib = document.createElement('span')
+  data: UnsplashPhoto | null = null
+
+  get options(): UnsplashOptions {
+    return {
+      'unsplash.photo.type': this.getAttribute('key') as PhotosType,
+      'unsplash.photo.value': this.getAttribute('value') as string,
+    }
+  }
+
+  async connectedCallback() {
+    this.attachShadow({ mode: 'open' })
+    this.shadowRoot?.append(style, this.img, this.attrib)
+
+    this.data = (await fetchData(this.options)) ?? null
+
+    if (!this.data) {
+      console.error(`Failed to fetch data from the API!`)
+
+      return
+    }
+
+    this.createAttrib()
+    this.sizeImage()
+
+    globalThis.addEventListener('resize', () => {
+      const backgroundColor = this.data?.color ?? 'white'
+
+      this.img.style.opacity = '0'
+
+      document.body.style.backgroundColor = backgroundColor
+    })
+
+    globalThis.addEventListener(
+      'resize',
+      debounce(this.sizeImage.bind(this), 200),
+    )
+  }
+
+  sizeImage() {
+    if (this.data?.url) {
+      const src = addResizeParams(this.data.url)
+
+      this.img.src = ''
+      this.img.onload = () => {
+        this.img.style.opacity = '1'
+      }
+
+      this.img.src = src
+    }
+  }
+
+  createAttrib() {
+    const unsplashLink = document.createElement('a')
+
+    unsplashLink.href = createUnsplashLink()
+    unsplashLink.innerText = 'Unsplash'
+
+    const photographerLink = document.createElement('a')
+
+    if (this.data?.author) {
+      photographerLink.href = createUnsplashLink(this.data.author.link)
+      photographerLink.innerText = this.data.author.name
+    }
+
+    this.attrib.append(
+      document.createTextNode('Photo by '),
+      photographerLink,
+      document.createTextNode(' on '),
+      unsplashLink,
+    )
+  }
+}
+
+style.textContent = css`
+  :host {
+    display: block;
+    position: fixed;
+    inset: 0;
+  }
+
   img {
     position: absolute;
     inset: 0;
-    animation: fadeIn 1.2s 0.5s both;
+
+    transition: opacity 200ms;
   }
 
   a {
@@ -23,84 +113,59 @@ style.textContent = /*css*/ `
     margin: 1rem;
     font-size: 0.88em;
     transition: opacity 200ms;
-    animation: fadeIn 600ms 250ms backwards;
+    animation: appear 600ms 250ms both;
 
     &:hover {
       opacity: 1;
     }
   }
 
-  @keyframes fadeIn {
+  @keyframes appear {
     from {
       opacity: 0;
-    }
-    to {
-      opacity: 1;
     }
   }
 `
 
-class EpicUnsplash extends HTMLElement {
-  img = document.createElement('img')
-  attrib = document.createElement('span')
-
-  get options(): Options {
-    return {
-      key: this.getAttribute('key') as PhotosType,
-      value: this.getAttribute('value') as string,
-    }
-  }
-
-  async connectedCallback() {
-    this.attachShadow({ mode: 'open' })
-    this.shadowRoot?.append(style, this.img, this.attrib)
-
-    const data = await fetchPhoto(this.options)
-
-    localStorage.setItem('data', JSON.stringify(data))
-
-    this.createAttrib(data)
-
-    const backgroundColor = data?.color ?? 'white'
-
-    document.body.style.backgroundColor = backgroundColor
-
-    const sizeImage = () => {
-      if (data?.url) {
-        const src = addResizeParams(data.url)
-
-        this.img.src = src
-      }
-    }
-
-    sizeImage()
-
-    globalThis.addEventListener('resize', sizeImage)
-  }
-
-  createAttrib(data?: UnsplashPhoto) {
-    const unsplashLink = document.createElement('a')
-
-    unsplashLink.href = createUnsplashLink()
-    unsplashLink.innerText = 'Unsplash'
-
-    const photographerLink = document.createElement('a')
-
-    if (data?.author) {
-      photographerLink.href = createUnsplashLink(data.author.link)
-      photographerLink.innerText = data.author.name
-    }
-
-    this.attrib.append(
-      document.createTextNode('Photo by '),
-      photographerLink,
-      document.createTextNode(' on '),
-      unsplashLink,
-    )
-  }
+type CachedImage = {
+  expires: number
+  data: UnsplashPhoto
 }
 
-customElements.define('epic-unsplash', EpicUnsplash)
+/**
+ * Fetches an Unsplash Photo resource from our API. Will
+ * return cached data if available.
+ * @param options API Options
+ * @returns An UnsplashPhoto or undefined (in the event of
+ * an error in the Response)
+ */
+async function fetchData(
+  options: UnsplashOptions,
+): Promise<UnsplashPhoto | undefined> {
+  const cache = localStorage.getItem('cache')
+
+  if (cache) {
+    const parsed = JSON.parse(cache) as CachedImage
+
+    if (parsed.expires > Date.now()) {
+      return parsed.data
+    }
+  }
+
+  const url = new URL(import.meta.env.PUBLIC_PROXY_URL)
+  const params = new URLSearchParams(options)
+  const req = new Request(`${url}?${params}`)
+  const res = await fetch(req)
+  const expires = Date.now() + Number(import.meta.env.PUBLIC_CACHE_TTL) * 1000
+  const cached: CachedImage = {
+    expires,
+    data: await res.json(),
+  }
+
+  localStorage.setItem('cache', JSON.stringify(cached))
+
+  return cached.data
+}
 
 /**
  * Creates a link back to Unsplash, specific to this
@@ -139,17 +204,4 @@ function addResizeParams(url: string) {
   return `${url}?${params}`
 }
 
-async function fetchPhoto(options: Options) {
-  const url = new URL(import.meta.env.PUBLIC_PROXY_URL)
-  const params = new URLSearchParams(options)
-
-  const res = await fetch(`${url}?${params}`, {
-    headers: {
-      'cache-control': `max-age=${import.meta.env.PUBLIC_CACHE_TTL}`,
-    },
-  })
-
-  const data = await res.json()
-
-  return data as UnsplashPhoto
-}
+customElements.define('epic-unsplash', EpicUnsplash)

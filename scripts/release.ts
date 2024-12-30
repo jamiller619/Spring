@@ -12,4 +12,7 @@ try {
   await fs.mkdir('release')
 } catch {}
 
-zip.writeZip(`release/spring-v${manifest.version}.zip`)
+const d = new Date()
+const t = `${d.getHours()}${d.getMinutes()}`.padStart(2, '0')
+
+zip.writeZip(`release/spring-v${manifest.version}-${t}.zip`)

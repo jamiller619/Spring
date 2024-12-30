@@ -4,13 +4,10 @@
   "description": "A new tab page featuring photos from Unsplash and a digital clock inspired by Ziiiro watches.",
   "author": "jamiller619@gmail.com",
   "version": "2.0",
+  "options_page": "options/index.html",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "host_permissions": [
-    "https://jamiller619-spring.deno.dev/*"
-  ],
-  "content_security_policy": {
-    "extension_pages": "img-src images.unsplash.com;"
-  }
+  "host_permissions": ["https://jamiller619-spring.deno.dev/*"],
+  "permissions": ["storage"]
 }

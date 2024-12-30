@@ -12,6 +12,7 @@
     "start": "deno run --allow-net --allow-read --allow-env index.ts"
   },
   "dependencies": {
+    "@std/log": "npm:@jsr/std__log@0.224.12",
     "dotenv": "^16.4.5",
     "unsplash-js": "^7.0.19"
   }

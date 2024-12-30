@@ -6,9 +6,20 @@ import { Options, UnsplashPhoto, photosType } from '../@types.ts'
 import { createApi } from 'npm:unsplash-js'
 import type { ApiResponse } from 'npm:unsplash-js/dist/helpers/response'
 import type { Random } from 'npm:unsplash-js/dist/methods/photos/types'
+import * as log from 'jsr:@std/log'
 
 dotenv.config({
   path: '../../.env',
+})
+
+log.setup({
+  handlers: {
+    default: new log.ConsoleHandler('DEBUG', {
+      formatter: (record) =>
+        `${record.datetime} [${record.levelName}] ${record.msg} ${JSON.stringify(record.args, null, 2)}`,
+      useColors: true,
+    }),
+  },
 })
 
 const unsplash = createApi({
@@ -16,15 +27,33 @@ const unsplash = createApi({
 })
 
 const headers = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': 'cache-control',
-  'access-control-allow-methods': 'GET, OPTIONS',
-  'cache-control': `public, max-age=${process.env.PUBLIC_CACHE_TTL}, immutable`,
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Cache-Control',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Cache-Control': `public, max-age=${process.env.PUBLIC_CACHE_TTL}`,
 }
+
+type APIOptions = Pick<Options, 'unsplash.photo.type' | 'unsplash.photo.value'>
+
+Deno.serve(
+  {
+    onError: function handleError(err) {
+      log.error((err as Error).message, err as Error)
+
+      return Response.json({
+        message: (err as Error).message,
+        status: 500,
+      })
+    },
+  },
+  handleRequests,
+)
 
 async function handleRequests(req: Request) {
   // If preflight request, exit early to prevent further work.
   if (req.method === 'OPTIONS') {
+    log.info(`OPTIONS to ${req.url}`)
+
     return new Response('', {
       status: 200,
       headers,
@@ -32,21 +61,27 @@ async function handleRequests(req: Request) {
   }
 
   if (req.method !== 'GET') {
-    throw new Error(`Invalid method!`)
+    throw new Error(`Invalid HTTP method "${String(req.method)}"!`)
   }
 
-  const url = new URL(req.url)
-  const params = Object.fromEntries(url.searchParams) as Options | undefined
+  log.info(`GET ${req.url}`)
 
-  if (!params?.key || !params?.value) {
+  const url = new URL(req.url)
+  const params = Object.fromEntries(url.searchParams) as
+    | Partial<APIOptions>
+    | undefined
+
+  if (!params?.['unsplash.photo.type'] || !params?.['unsplash.photo.value']) {
     throw new Error(`Missing required parameters!`)
   }
 
-  if (!photosType.includes(params.key)) {
+  if (!photosType.includes(params['unsplash.photo.type'])) {
     throw new Error(`Invalid key parameter!`)
   }
 
-  const res = await fetchPhotoBasedOnOptions(params)
+  log.info(`${req.url} Calling Unsplash API`, params)
+
+  const res = await fetchPhotoBasedOnOptions(params as APIOptions)
 
   if (!res) {
     throw new Error(`Unable to retreive an API response!`)
@@ -60,22 +95,14 @@ async function handleRequests(req: Request) {
 
   await unsplash.photos.trackDownload({ downloadLocation })
 
+  log.info(`${req.url} Tracked download`, downloadLocation)
+
+  log.info(`${req.url} Returning photo`, photo)
+
   return Response.json(photo, {
     headers,
   })
 }
-
-Deno.serve(
-  {
-    onError: function handleError(err) {
-      return Response.json({
-        message: (err as Error).message,
-        status: 500,
-      })
-    },
-  },
-  handleRequests,
-)
 
 /**
  * Retreives a single image from the Unsplash API based on
@@ -83,17 +110,29 @@ Deno.serve(
  * @param options Extension's options object
  * @returns A single image
  */
-function fetchPhotoBasedOnOptions(options: Options) {
-  switch (options.key) {
+function fetchPhotoBasedOnOptions(options: APIOptions) {
+  switch (options['unsplash.photo.type']) {
     case 'collection': {
       return unsplash.photos.getRandom({
-        collectionIds: [options.value],
+        collectionIds: [options['unsplash.photo.value']],
       }) as Promise<ApiResponse<Random>>
     }
 
     case 'search': {
       return unsplash.photos.getRandom({
-        query: options.value,
+        query: options['unsplash.photo.value'],
+      }) as Promise<ApiResponse<Random>>
+    }
+
+    case 'topic': {
+      return unsplash.photos.getRandom({
+        topicIds: [options['unsplash.photo.value']],
+      }) as Promise<ApiResponse<Random>>
+    }
+
+    case 'user': {
+      return unsplash.photos.getRandom({
+        username: options['unsplash.photo.value'],
       }) as Promise<ApiResponse<Random>>
     }
   }

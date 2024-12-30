@@ -1,0 +1,29 @@
+@import 'chota/src/chota.css';
+
+form {
+  padding: 1rem;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 0 2rem;
+  padding: 0 0 2rem;
+  border-bottom: 3px solid lightgray;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+label.align {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+input[type='checkbox'] {
+  height: 2rem;
+}

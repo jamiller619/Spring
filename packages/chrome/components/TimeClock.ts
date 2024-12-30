@@ -1,4 +1,6 @@
-class DateTimeClock extends HTMLElement {
+import { css } from '@/utils/cis'
+
+class TimeClock extends HTMLElement {
   start = new Date()
   locale = this.hasAttribute('locale')
     ? (this.getAttribute('locale') as string)
@@ -7,7 +9,7 @@ class DateTimeClock extends HTMLElement {
   time = document.createElement('span')
   date = document.createElement('span')
 
-  connectedCallback() {
+  async connectedCallback() {
     this.attachShadow({ mode: 'open' })
 
     this.time.className = 'time'
@@ -49,8 +51,9 @@ const timeFormat: Intl.DateTimeFormatOptions = {
 
 const style = document.createElement('style')
 
-style.textContent = /*css*/ `
-  .date, .time {
+style.textContent = css`
+  .date,
+  .time {
     display: block;
     line-height: 1;
   }
@@ -64,4 +67,4 @@ style.textContent = /*css*/ `
   }
 `
 
-customElements.define('datetime-clock', DateTimeClock)
+customElements.define('time-clock', TimeClock)

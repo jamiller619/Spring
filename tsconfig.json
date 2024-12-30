@@ -1,8 +1,9 @@
 {
+  "include": ["packages/chrome/**/*.ts", "packages/api/**/*.ts", "**/*.d.ts"],
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
