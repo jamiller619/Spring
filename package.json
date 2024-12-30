@@ -16,7 +16,8 @@
     "chrome:dx": "yarn workspace @spring/chrome dx",
     "build": "yarn workspace @spring/chrome build",
     "api:deploy": "deployctl deploy --env-file=.env",
-    "release": "yarn chrome:build && deno run -A scripts/release.ts"
+    "release": "yarn chrome:build && deno run -A scripts/release.ts",
+    "clean": "npx rimraf packages/*/node_modules yarn.lock node_modules"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.6",
